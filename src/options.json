@@ -1,0 +1,151 @@
+{
+    "RS485": {
+        "type": "Socket"
+    },
+    "Socket": {
+        "server": "192.168.0.107",
+        "port": 9999
+    },
+    "Mqtt": {
+        "server": "192.168.0.106",
+        "port": 1883,
+        "username": "someone",
+        "password": "1004whgkdbs!@"
+    },
+    "Devices": {
+        "Thermostat": "0x18",
+        "Light": "0x19",
+        "GasValve": "0x1B",
+        "Airconditioner": "0x1C",
+        "Doorlock": "0x1E",
+        "Batchoffsw": "0x2A",
+        "Ventilator": "0x2B",
+        "Elevator": "0x34",
+        "HEMS": "0xFF"
+    },
+    "Light": [
+        {
+            "name": "Living Room Ceil 1",
+            "index": 1,
+            "room": 1
+        },
+        {
+            "name": "Living Room Ceil 2",
+            "index": 2,
+            "room": 1
+        },
+        {
+            "name": "Living Room Ceil 3",
+            "index": 3,
+            "room": 1
+        },
+        {
+            "name": "hallway",
+            "index": 4,
+            "room": 1
+        }
+    ],
+    "Thermostat": [
+        {
+            "name": "Livingroom Thermostat",
+            "index": 0,
+            "room": 1,
+            "range_min": 15,
+            "range_max": 35
+        },
+        {
+            "name": "Bedroom Thermostat",
+            "index": 0,
+            "room": 2,
+            "range_min": 15,
+            "range_max": 35
+        },
+        {
+            "name": "Child 1 Thermostat",
+            "index": 0,
+            "room": 3,
+            "range_min": 15,
+            "range_max": 35
+        },
+        {
+            "name": "Child 2 Thermostat",
+            "index": 0,
+            "room": 4,
+            "range_min": 15,
+            "range_max": 35
+        }
+    ],
+    "Airconditioner": [
+        {
+            "name": "Livingroom Airconditioner",
+            "index": 0,
+            "room": 1,
+            "range_min": 15,
+            "range_max": 35
+        },
+        {
+            "name": "Bedroom Airconditioner",
+            "index": 0,
+            "room": 2,
+            "range_min": 15,
+            "range_max": 35
+        },
+        {
+            "name": "Child 1 Airconditioner",
+            "index": 0,
+            "room": 3,
+            "range_min": 15,
+            "range_max": 35
+        },
+        {
+            "name": "Child 2 Airconditioner",
+            "index": 0,
+            "room": 4,
+            "range_min": 15,
+            "range_max": 35
+        }
+    ],
+    "GasValve": [
+        {
+            "name": "Kitchen Gas Valve",
+            "index": 0,
+            "room": 0
+        }
+    ],
+    "Ventilator": [
+        {
+            "name": "Ventilator",
+            "index": 0,
+            "room": 0
+        }
+    ],
+    "Elevator": [
+        {
+            "name": "Elevator",
+            "index": 0,
+            "room": 0
+        }
+    ],
+    "Batchoffsw": [
+        {
+            "name": "Batch Off Switch",
+            "index": 0,
+            "room": 0
+        }
+    ],
+    "HEMS": [
+        {
+            "name": "HEMS",
+            "index": 0,
+            "room": 0
+        }
+    ],
+    "Doorlock": [
+        {
+            "name": "Front Door Lock",
+            "index": 0,
+            "room": 0,
+            "gpio": 23
+        }
+    ]
+}

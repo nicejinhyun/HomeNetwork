@@ -1,0 +1,12 @@
+flask
+flask_wtf
+flask_moment
+flask_httpauth
+flask_bootstrap
+werkzeug
+paho-mqtt
+pyserial
+requests
+beautifulsoup4
+regex
+pyOpenSSL
