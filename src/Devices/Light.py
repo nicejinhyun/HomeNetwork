@@ -54,7 +54,7 @@ class Light(Device):
         # YY: 02 = OFF, 01 = ON
         # ZZ: Checksum (XOR SUM)
         packet = bytearray([0xF7, 0x0B, 0x01, 0x19, 0x02, 0x40])
-        packet.append((self.room_index << 4) + (self.index + 1))
+        packet.append((self.room_index << 4) + (self.index))
         if state:
             packet.extend([0x01, 0x00])
         else:

@@ -6,3 +6,4 @@ sys.path = list(set(sys.path))
 del CURPATH
 
 from ThreadParseResultQueue import ThreadParseResultQueue
+from ThreadCommandQueue import ThreadCommandQueue

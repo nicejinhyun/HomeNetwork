@@ -15,6 +15,7 @@ import multiprocessing
 from Devices import *
 from RS485 import *
 from Common import *
+from Threads import *
 
 CURPATH = os.path.dirname(os.path.abspath(__file__))  # {$PROJECT}/include/
 PROJPATH = os.path.dirname(CURPATH)  # {$PROJECT}/
@@ -47,8 +48,8 @@ class Home:
     name: str = 'Home'
     device_list: List[Device]
 
-#    thread_cmd_queue: Union[ThreadCommandQueue, None] = None
-#    thread_parse_result_queue: Union[ThreadParseResultQueue, None] = None
+    thread_cmd_queue: Union[ThreadCommandQueue, None] = None
+    thread_parse_result_queue: Union[ThreadParseResultQueue, None] = None
 #    thread_timer: Union[ThreadTimer, None] = None
     queue_command: queue.Queue
     queue_parse_result: queue.Queue
@@ -88,6 +89,17 @@ class Home:
         self.loadConfig()
         self.initDevices()
 
+        self.startThreadCommandQueue()
+        self.startThreadParseResultQueue()
+
+        try:
+            self.mqtt_client.connect(self.mqtt_host, self.mqtt_port)
+        except Exception as e:
+            writeLog('MQTT Connection Error: {}'.format(e), self)
+        self.mqtt_client.loop_start()
+
+        writeLog(f'Initialized <{self.name}>', self)
+
     def initMQTT(self):
         self.mqtt_client = mqtt.Client(client_id="CentralPark")
         self.mqtt_client.on_connect = self.onMqttClientConnect
@@ -114,8 +126,8 @@ class Home:
             cfg.check_connection = 1
             rs485 = RS485Comm(f'RS485-Main')
             parser = PacketParser(rs485, 'Main', 0, ParserType.REGULAR)
-            #parser.setBufferSize(64)
-            #parser.sig_parse_result.connect(lambda x: self.queue_parse_result.put(x))
+            parser.setBufferSize(64)
+            parser.sig_parse_result.connect(lambda x: self.queue_parse_result.put(x))
             self.rs485_info_list.append(RS485Info(rs485, cfg, parser, 0))
             writeLog(f"Create RS485 Instance (name: Main)")
 
@@ -214,6 +226,48 @@ class Home:
             except Exception as e:
                 writeLog(f"Failed to initialize '{name}' rs485 connection ({e})", self)
                 continue
+
+    def startThreadCommandQueue(self):
+        if self.thread_cmd_queue is None:
+            self.thread_cmd_queue = ThreadCommandQueue(self.queue_command)
+            self.thread_cmd_queue.sig_terminated.connect(self.onThreadCommandQueueTerminated)
+            self.thread_cmd_queue.daemon = True
+            self.thread_cmd_queue.start()
+
+    def stopThreadCommandQueue(self):
+        if self.thread_cmd_queue is not None:
+            self.thread_cmd_queue.stop()
+
+    def onThreadCommandQueueTerminated(self):
+        del self.thread_cmd_queue
+        self.thread_cmd_queue = None
+
+    def startThreadParseResultQueue(self):
+        if self.thread_parse_result_queue is None:
+            self.thread_parse_result_queue = ThreadParseResultQueue(self.queue_parse_result)
+            self.thread_parse_result_queue.sig_get.connect(self.handlePacketParseResult)
+            self.thread_parse_result_queue.sig_terminated.connect(self.onThreadParseResultQueueTerminated)
+            self.thread_parse_result_queue.daemon = True
+            self.thread_parse_result_queue.start()
+    
+    def stopThreadParseResultQueue(self):
+        if self.thread_parse_result_queue is not None:
+            self.thread_parse_result_queue.stop()
+
+    def onThreadParseResultQueueTerminated(self):
+        del self.thread_parse_result_queue
+        self.thread_parse_result_queue = None
+
+    def command(self, **kwargs):
+        try:
+            dev: Device = kwargs['device']
+            dev_type: DeviceType = dev.getType()
+            index = self.parser_mapping.get(dev_type)
+            info: RS485Info = self.rs485_info_list[index]
+            kwargs['parser'] = info.parser
+        except Exception as e:
+            writeLog('command Exception::{}'.format(e), self)
+        self.queue_command.put(kwargs)
 
     def onDeviceSetState(self, dev: Device, state: int):
         if isinstance(dev, AirConditioner):
@@ -551,6 +605,16 @@ class Home:
                     target=message['state']
                 )
 
+    def publish_all(self):
+        for dev in self.device_list:
+            try:
+                dev.publishMQTT()
+            except ValueError as e:
+                writeLog(f'{e}: {dev}, {dev.mqtt_publish_topic}', self)
+
+    def handlePacketParseResult(self, result: dict):
+        self.updateDeviceState(result)
+
     def findDevice(self, dev_type: DeviceType, index: int, room_index: int) -> Device:
         find = list(filter(lambda x: 
             x.getType() == dev_type and x.getIndex() == index and x.getRoomIndex() == room_index, 
@@ -561,6 +625,77 @@ class Home:
 
     def findDevices(self, dev_type: DeviceType) -> List[Device]:
         return list(filter(lambda x: x.getType() == dev_type, self.device_list))
+
+    def updateDeviceState(self, result: dict):
+        try:
+            dev_type: DeviceType = result.get('device')
+            dev_idx: int = result.get('index')
+            if dev_idx is None:
+                dev_idx = 0
+            room_idx: int = result.get('room_index')
+            if room_idx is None:
+                room_idx = 0
+            device = self.findDevice(dev_type, dev_idx, room_idx)
+            if device is None:
+                writeLog(f'updateDeviceState::Device is not registered ({dev_type.name}, idx={dev_idx}, room={room_idx})', self)
+                return
+            
+            if dev_type in [DeviceType.LIGHT, DeviceType.OUTLET, DeviceType.GASVALVE, DeviceType.BATCHOFFSWITCH]:
+                state = result.get('state')
+                device.updateState(state)
+            elif dev_type is DeviceType.THERMOSTAT:
+                state = result.get('state')
+                temp_current = result.get('temp_current')
+                temp_config = result.get('temp_config')
+                device.updateState(
+                    state, 
+                    temp_current=temp_current, 
+                    temp_config=temp_config
+                )
+            elif dev_type is DeviceType.AIRCONDITIONER:
+                state = result.get('state')
+                temp_current = result.get('temp_current')
+                temp_config = result.get('temp_config')
+                mode = result.get('mode')
+                rotation_speed = result.get('rotation_speed')
+                device.updateState(
+                    state,
+                    temp_current=temp_current, 
+                    temp_config=temp_config,
+                    mode=mode,
+                    rotation_speed=rotation_speed
+                )
+            elif dev_type is DeviceType.VENTILATOR:
+                state = result.get('state')
+                rotation_speed = result.get('rotation_speed')
+                device.updateState(state, rotation_speed=rotation_speed)
+            elif dev_type is DeviceType.ELEVATOR:
+                state = result.get('state')
+                device.updateState(
+                    state, 
+                    data_type=result.get('data_type'),
+                    ev_dev_idx=result.get('ev_dev_idx'),
+                    direction=result.get('direction'),
+                    floor=result.get('floor')
+                )
+            elif dev_type is DeviceType.SUBPHONE:
+                device.updateState(
+                    0, 
+                    ringing_front=result.get('ringing_front'),
+                    ringing_communal=result.get('ringing_communal'),
+                    streaming=result.get('streaming'),
+                    doorlock=result.get('doorlock')
+                )
+            elif dev_type is DeviceType.HEMS:
+                result.pop('device')
+                device.updateState(
+                    0,
+                    monitor_data=result
+                )
+            elif dev_type is DeviceType.DOORLOCK:
+                pass
+        except Exception as e:
+            writeLog('updateDeviceState::Exception::{} ({})'.format(e, result), self)
 
     def joinThread(self):
         for elem in self.rs485_info_list:

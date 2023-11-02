@@ -278,6 +278,8 @@ class PacketParser:
         self.sig_parse_result.emit(data)
 
     def handleLight(self, packet: bytearray):
+        msg = ' '.join(['%02X' % x for x in packet])
+        print(f"handleLight >> {msg}")
         room_idx = packet[6] >> 4
         if packet[4] == 0x01:  # 상태 쿼리
             pass
@@ -300,7 +302,7 @@ class PacketParser:
                 state = 0 if packet[8] == 0x02 else 1
                 result = {
                     'device': DeviceType.LIGHT, 
-                    'index': dev_idx - 1,
+                    'index': dev_idx,
                     'room_index': room_idx,
                     'state': state
                 }
