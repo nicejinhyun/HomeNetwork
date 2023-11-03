@@ -2,9 +2,7 @@ import os
 import time
 import json
 import queue
-import psutil
 import traceback
-import psutil
 from functools import partial
 from typing import List, Union
 from collections import OrderedDict
