@@ -109,9 +109,9 @@ class Home:
         self.mqtt_client.on_log = self.onMqttClientLog
 
     def loadConfig(self):
-        if not os.path.isfile('options.json'):
+        if not os.path.isfile('/data/options.json'):
             return
-        with open('options.json') as jsonFile:
+        with open('/data/options.json') as jsonFile:
             jsonData = json.load(jsonFile)
 
             commType = jsonData['RS485']['type']

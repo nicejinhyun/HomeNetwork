@@ -21,15 +21,15 @@ options:
     username: user
     password: '1234'
   Devices:
-    '0x18': Thermostat
-    '0x19': Light
-    '0x1B': GasValve
-    '0x1C': Airconditioner
-    '0x1E': Doorlock
-    '0x2A': Batchoffsw
-    '0x2B': Ventilator
-    '0x34': Elevator
-    '0xFF': HEMS
+    Thermostat: '0x18'
+    Light: '0x19'
+    GasValve: '0x1B'
+    Airconditioner: '0x1C'
+    Doorlock: '0x1E'
+    Batchoffsw: '0x2A'
+    Ventilator: '0x2B'
+    Elevator: '0x34'
+    HEMS: '0xFF'
   Light:
   - name: Living Room Ceil 1
     index: 1
@@ -122,15 +122,15 @@ schema:
     username: str
     password: str
   Devices:
-    '0x18': str
-    '0x19': str
-    '0x1B': str
-    '0x1C': str
-    '0x1E': str
-    '0x2A': str
-    '0x2B': str
-    '0x34': str
-    '0xFF': str
+    Thermostat: str
+    Light: str
+    GasValve: str
+    Airconditioner: str
+    Doorlock: str
+    Batchoffsw: str
+    Ventilator: str
+    Elevator: str
+    HEMS: str
   Light:
   - name: str
     index: int
