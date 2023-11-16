@@ -302,7 +302,7 @@ class PacketParser:
                 state = 0 if packet[8] == 0x02 else 1
                 result = {
                     'device': DeviceType.LIGHT, 
-                    'index': dev_idx,
+                    'index': dev_idx - 1,
                     'room_index': room_idx,
                     'state': state
                 }

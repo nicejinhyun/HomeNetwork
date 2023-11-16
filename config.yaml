@@ -32,16 +32,16 @@ options:
     HEMS: '0xFF'
   Light:
   - name: Living Room Ceil 1
-    index: 1
+    index: 0
     room: 1
   - name: Living Room Ceil 2
-    index: 2
+    index: 1
     room: 1
   - name: Living Room Ceil 3
-    index: 3
+    index: 2
     room: 1
   - name: hallway
-    index: 4
+    index: 3
     room: 1
   Thermostat:
   - name: Livingroom Thermostat
