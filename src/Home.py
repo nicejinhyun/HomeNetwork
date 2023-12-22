@@ -719,5 +719,5 @@ if __name__ == "__main__":
         keepAlive = False
         if not home_obj.joinThread():
             writeLog('[Error] Connection lost... reconnect after 1 min')
-            time.sleep(60)
-            keepAlive = True
+            #time.sleep(60)
+            #keepAlive = True
